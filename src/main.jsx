@@ -60,6 +60,13 @@ function withBase(basePath = "", path = "/") {
   return prefix ? `${prefix}${normalizedPath}` : normalizedPath;
 }
 
+function resolveMediaUrl(basePath = "", url = "") {
+  if (!url) return "";
+  if (/^(https?:)?\/\//.test(url) || url.startsWith("data:")) return url;
+  if (url.startsWith("/")) return withBase(basePath, url);
+  return url;
+}
+
 function useSiteData(basePath = "") {
   const [content, setContent] = useState(null);
   const [performances, setPerformances] = useState([]);
@@ -246,8 +253,8 @@ function buildFeaturedCards(performances) {
     .slice(0, 9);
 }
 
-function PhotoCarousel({ photos, title, onOpen, compact = false }) {
-  const safePhotos = photos.filter(Boolean);
+function PhotoCarousel({ photos, title, onOpen, compact = false, basePath = "" }) {
+  const safePhotos = photos.map((photo) => resolveMediaUrl(basePath, photo)).filter(Boolean);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -297,20 +304,21 @@ function PhotoCarousel({ photos, title, onOpen, compact = false }) {
   );
 }
 
-function PhotoLightbox({ title, photos, initialIndex, onClose }) {
+function PhotoLightbox({ title, photos, initialIndex, onClose, basePath = "" }) {
   const [index, setIndex] = useState(initialIndex);
+  const safePhotos = photos.map((photo) => resolveMediaUrl(basePath, photo)).filter(Boolean);
 
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
-      if (event.key === "ArrowLeft") setIndex((current) => (current - 1 + photos.length) % photos.length);
-      if (event.key === "ArrowRight") setIndex((current) => (current + 1) % photos.length);
+      if (event.key === "ArrowLeft") setIndex((current) => (current - 1 + safePhotos.length) % safePhotos.length);
+      if (event.key === "ArrowRight") setIndex((current) => (current + 1) % safePhotos.length);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, photos.length]);
+  }, [onClose, safePhotos.length]);
 
-  if (photos.length === 0) return null;
+  if (safePhotos.length === 0) return null;
 
   return (
     <div className="lightbox-shell" onClick={onClose} role="dialog" aria-modal="true">
@@ -319,18 +327,18 @@ function PhotoLightbox({ title, photos, initialIndex, onClose }) {
           <X size={20} />
         </button>
         <div className="lightbox-stage">
-          <button className="lightbox-arrow left" type="button" onClick={() => setIndex((current) => (current - 1 + photos.length) % photos.length)} aria-label="上一張">
+          <button className="lightbox-arrow left" type="button" onClick={() => setIndex((current) => (current - 1 + safePhotos.length) % safePhotos.length)} aria-label="上一張">
             <ChevronLeft size={22} />
           </button>
-          <img src={photos[index]} alt={title} />
-          <button className="lightbox-arrow right" type="button" onClick={() => setIndex((current) => (current + 1) % photos.length)} aria-label="下一張">
+          <img src={safePhotos[index]} alt={title} />
+          <button className="lightbox-arrow right" type="button" onClick={() => setIndex((current) => (current + 1) % safePhotos.length)} aria-label="下一張">
             <ChevronRight size={22} />
           </button>
         </div>
         <div className="lightbox-meta">
           <strong>{title}</strong>
           <span>
-            {index + 1} / {photos.length}
+            {index + 1} / {safePhotos.length}
           </span>
         </div>
       </div>
@@ -362,7 +370,7 @@ export function PublicSite({ content, performances, basePath = "" }) {
       </nav>
 
       <section id="top" className="hero">
-        <img className="hero-image" src={content.profile.heroImage} alt="草帽女孩溫柏淳形象照" />
+        <img className="hero-image" src={resolveMediaUrl(basePath, content.profile.heroImage)} alt="草帽女孩溫柏淳形象照" />
         <div className="hero-scrim" />
         <div className="hero-content reveal">
           <span className="eyebrow">Taichung busker · live music</span>
@@ -417,6 +425,7 @@ export function PublicSite({ content, performances, basePath = "" }) {
               <PhotoCarousel
                 photos={getPhotos(item)}
                 title={item.title}
+                basePath={basePath}
                 onOpen={(index) => setLightbox({ title: item.title, photos: getPhotos(item), index })}
               />
               <div className="card-body">
@@ -475,6 +484,7 @@ export function PublicSite({ content, performances, basePath = "" }) {
                         compact
                         photos={getPhotos(item)}
                         title={item.title}
+                        basePath={basePath}
                         onOpen={(index) => setLightbox({ title: item.title, photos: getPhotos(item), index })}
                       />
                     ) : null}
@@ -533,6 +543,7 @@ export function PublicSite({ content, performances, basePath = "" }) {
           title={lightbox.title}
           photos={lightbox.photos}
           initialIndex={lightbox.index}
+          basePath={basePath}
           onClose={() => setLightbox(null)}
         />
       ) : null}
