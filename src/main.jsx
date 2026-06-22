@@ -67,6 +67,10 @@ function resolveMediaUrl(basePath = "", url = "") {
   return url;
 }
 
+function shouldShowTimelinePhotos(item) {
+  return ![2014, 2015, 2016].includes(Number(item?.year));
+}
+
 function useSiteData(basePath = "") {
   const [content, setContent] = useState(null);
   const [performances, setPerformances] = useState([]);
@@ -479,7 +483,7 @@ export function PublicSite({ content, performances, basePath = "" }) {
                       <h4>{item.title}</h4>
                       <p>{item.kind === "merged" ? `${item.venue} · ${item.summary}` : item.venue}</p>
                     </div>
-                    {getPhotos(item).length > 0 ? (
+                    {shouldShowTimelinePhotos(item) && getPhotos(item).length > 0 ? (
                       <PhotoCarousel
                         compact
                         photos={getPhotos(item)}
