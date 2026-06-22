@@ -1,4 +1,5 @@
 {
+  "project_id": "appgprj_6a396010876081918e777527ae4c8ed4",
   "buildCommand": "node ./node_modules/vite/bin/vite.js build",
   "outputDirectory": "dist",
   "framework": "vite",
