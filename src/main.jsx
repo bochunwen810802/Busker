@@ -1,5 +1,6 @@
+"use client";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
 import {
   ArrowDown,
   CalendarDays,
@@ -25,7 +26,6 @@ import {
   Unlock,
   X
 } from "lucide-react";
-import "./styles.css";
 
 const ADMIN_PASSWORD = "bochunmusic";
 const emptyPerformance = {
@@ -327,7 +327,7 @@ function PhotoLightbox({ title, photos, initialIndex, onClose }) {
   );
 }
 
-function PublicSite({ content, performances }) {
+export function PublicSite({ content, performances }) {
   const featured = useMemo(() => buildFeaturedCards(performances), [performances]);
   const grouped = useMemo(() => {
     return buildTimelineGroups(performances);
@@ -545,7 +545,7 @@ function ResumeColumn({ icon, title, items, compact = false }) {
   );
 }
 
-function ManageSite({ performances }) {
+export function ManageSite({ performances }) {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("bochun-admin") === "yes");
   const [password, setPassword] = useState("");
   const [records, setRecords] = useState(performances);
@@ -750,9 +750,9 @@ function Field({ label, value, onChange, type = "text", required = false }) {
   );
 }
 
-function App() {
+export function AppShell({ mode = "public" }) {
   const { content, performances, error } = useSiteData();
-  const isManage = window.location.pathname.startsWith("/manage");
+  const isManage = mode === "manage";
 
   if (error) return <div className="loading-state">{error}</div>;
   if (!content) return <div className="loading-state">載入中</div>;
@@ -760,8 +760,6 @@ function App() {
   return isManage ? (
     <ManageSite performances={performances} />
   ) : (
-    <PublicSite content={content} performances={performances} />
+      <PublicSite content={content} performances={performances} />
   );
 }
-
-createRoot(document.getElementById("root")).render(<App />);

@@ -1,16 +1,28 @@
 {
+  "name": "busker-resume-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
-    "dev": "node ./node_modules/vite/bin/vite.js --host 127.0.0.1",
-    "build": "node ./node_modules/vite/bin/vite.js build",
-    "preview": "node ./node_modules/vite/bin/vite.js preview --host 127.0.0.1"
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "start": "vinext start"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^5.0.0",
-    "vite": "^7.0.0",
-    "typescript": "^5.8.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "lucide-react": "^0.468.0"
+    "lucide-react": "^0.468.0",
+    "next": "16.2.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.37.1",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "vinext": "0.0.50",
+    "vite": "8.0.13",
+    "wrangler": "4.92.0"
+  }
 }

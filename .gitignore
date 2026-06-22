@@ -3,3 +3,5 @@ node_modules/
 dist/
 outputs/
 work/
+.pnpm-store/
+.wrangler/
