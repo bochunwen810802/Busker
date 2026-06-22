@@ -49,22 +49,33 @@ function getPhotos(item) {
   return [...new Set(photos.filter(Boolean))];
 }
 
-function useSiteData() {
+function basePrefix(basePath = "") {
+  if (!basePath || basePath === "/") return "";
+  return basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
+}
+
+function withBase(basePath = "", path = "/") {
+  const prefix = basePrefix(basePath);
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return prefix ? `${prefix}${normalizedPath}` : normalizedPath;
+}
+
+function useSiteData(basePath = "") {
   const [content, setContent] = useState(null);
   const [performances, setPerformances] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     Promise.all([
-      fetch("/data/site-content.json").then((response) => response.json()),
-      fetch("/data/performances.json").then((response) => response.json())
+      fetch(withBase(basePath, "/data/site-content.json")).then((response) => response.json()),
+      fetch(withBase(basePath, "/data/performances.json")).then((response) => response.json())
     ])
       .then(([siteContent, performanceData]) => {
         setContent(siteContent);
         setPerformances(performanceData);
       })
       .catch(() => setError("資料載入失敗，請確認 data JSON 是否存在。"));
-  }, []);
+  }, [basePath]);
 
   return { content, performances, error };
 }
@@ -327,7 +338,7 @@ function PhotoLightbox({ title, photos, initialIndex, onClose }) {
   );
 }
 
-export function PublicSite({ content, performances }) {
+export function PublicSite({ content, performances, basePath = "" }) {
   const featured = useMemo(() => buildFeaturedCards(performances), [performances]);
   const grouped = useMemo(() => {
     return buildTimelineGroups(performances);
@@ -346,7 +357,7 @@ export function PublicSite({ content, performances }) {
           <a href="#performances">演出</a>
           <a href="#resume">履歷</a>
           <a href="#contact">邀約</a>
-          <a href="/manage">管理</a>
+          <a href={withBase(basePath, "/manage")}>管理</a>
         </div>
       </nav>
 
@@ -545,7 +556,7 @@ function ResumeColumn({ icon, title, items, compact = false }) {
   );
 }
 
-export function ManageSite({ performances }) {
+export function ManageSite({ performances, basePath = "" }) {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("bochun-admin") === "yes");
   const [password, setPassword] = useState("");
   const [records, setRecords] = useState(performances);
@@ -652,7 +663,7 @@ export function ManageSite({ performances }) {
             進入後台
           </button>
           {message && <p className="form-message">{message}</p>}
-          <a href="/">回公開網站</a>
+          <a href={withBase(basePath, "/")}>回公開網站</a>
         </form>
       </main>
     );
@@ -675,7 +686,7 @@ export function ManageSite({ performances }) {
             <Download size={18} />
             匯出
           </button>
-          <a className="icon-button" href="/">
+          <a className="icon-button" href={withBase(basePath, "/")}>
             回網站
           </a>
         </div>
@@ -750,16 +761,16 @@ function Field({ label, value, onChange, type = "text", required = false }) {
   );
 }
 
-export function AppShell({ mode = "public" }) {
-  const { content, performances, error } = useSiteData();
+export function AppShell({ mode = "public", basePath = "" }) {
+  const { content, performances, error } = useSiteData(basePath);
   const isManage = mode === "manage";
 
   if (error) return <div className="loading-state">{error}</div>;
   if (!content) return <div className="loading-state">載入中</div>;
 
   return isManage ? (
-    <ManageSite performances={performances} />
+    <ManageSite performances={performances} basePath={basePath} />
   ) : (
-      <PublicSite content={content} performances={performances} />
+    <PublicSite content={content} performances={performances} basePath={basePath} />
   );
 }

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var repoBase = "/Busker";
+        var path = window.location.pathname.startsWith(repoBase)
+          ? window.location.pathname.slice(repoBase.length)
+          : window.location.pathname;
+        var query = window.location.search || "";
+        var hash = window.location.hash || "";
+        var target = repoBase + "/?p=" + encodeURIComponent(path + query + hash);
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
-    "start": "vinext start"
+    "start": "vinext start",
+    "build:pages": "vite build --config vite.pages.config.js"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

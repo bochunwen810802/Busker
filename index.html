@@ -8,9 +8,22 @@
       content="草帽女孩溫柏淳，台中街頭藝人、吉他彈唱與樂團表演者，提供商演、音樂祭、婚禮、社區活動與評審邀約。"
     />
     <title>草帽女孩溫柏淳 | 活動演出與評審履歷</title>
+    <script>
+      (function () {
+        const url = new URL(window.location.href);
+        const redirectPath = url.searchParams.get("p");
+        if (!redirectPath) return;
+
+        const base = window.location.pathname.endsWith("/")
+          ? window.location.pathname.slice(0, -1)
+          : window.location.pathname;
+
+        window.history.replaceState({}, "", base + redirectPath);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/entry-pages.jsx"></script>
   </body>
 </html>
