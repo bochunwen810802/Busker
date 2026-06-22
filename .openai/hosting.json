@@ -1,10 +1,5 @@
 {
   "project_id": "appgprj_6a396010876081918e777527ae4c8ed4",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vinext",
-  "bindings": {
-    "d1": null,
-    "r2": null
-  }
+  "d1": null,
+  "r2": null
 }
