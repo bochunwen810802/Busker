@@ -1,0 +1,9 @@
+{
+  "buildCommand": "node ./node_modules/vite/bin/vite.js build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "bindings": {
+    "d1": null,
+    "r2": null
+  }
+}
