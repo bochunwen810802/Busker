@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 
 const ADMIN_PASSWORD = "bochunmusic";
+const VISIT_STORAGE_KEY = "bochun-visitor-analytics-v1";
+const VISIT_SESSION_KEY = "bochun-visitor-session-v1";
 const emptyPerformance = {
   id: "",
   date: "",
@@ -39,6 +41,7 @@ const emptyPerformance = {
   role: "吉他彈唱 / Vocal",
   summary: "",
   photo: "",
+  photos: [],
   featured: false
 };
 
@@ -69,6 +72,130 @@ function resolveMediaUrl(basePath = "", url = "") {
 
 function shouldShowTimelinePhotos(item) {
   return ![2014, 2015, 2016].includes(Number(item?.year));
+}
+
+function normalizePerformanceRecord(item) {
+  const photos = getPhotos(item);
+  return {
+    ...item,
+    photo: photos[0] || "",
+    photos
+  };
+}
+
+function loadStoredVisits() {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(VISIT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredVisits(records) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(VISIT_STORAGE_KEY, JSON.stringify(records));
+}
+
+function getDayKey(value) {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDayLabel(dayKey) {
+  const [year, month, day] = String(dayKey).split("-");
+  return `${year}.${month}.${day}`;
+}
+
+function getVisitPath(basePath = "") {
+  if (typeof window === "undefined") return "/";
+  const prefix = basePrefix(basePath);
+  const pathname = window.location.pathname || "/";
+  const trimmed = prefix && pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname;
+  return trimmed || "/";
+}
+
+function getDeviceLabel() {
+  if (typeof navigator === "undefined") return "unknown";
+  const ua = navigator.userAgent || "";
+  if (/tablet|ipad/i.test(ua)) return "tablet";
+  if (/mobile|android|iphone/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
+function recordVisit(basePath = "", pageTitle = "") {
+  if (typeof window === "undefined") return;
+  const session = window.sessionStorage;
+  const currentSessionId = session.getItem(VISIT_SESSION_KEY) || `session-${Date.now().toString(36)}`;
+  session.setItem(VISIT_SESSION_KEY, currentSessionId);
+
+  const now = new Date();
+  const path = getVisitPath(basePath);
+  const records = loadStoredVisits();
+  const latestSamePath = [...records]
+    .reverse()
+    .find((item) => item.sessionId === currentSessionId && item.path === path);
+
+  if (latestSamePath) {
+    const previous = new Date(latestSamePath.timestamp).getTime();
+    if (now.getTime() - previous < 30 * 60 * 1000) return;
+  }
+
+  const next = {
+    id: `visit-${now.getTime().toString(36)}`,
+    day: getDayKey(now),
+    timestamp: now.toISOString(),
+    path,
+    pageTitle: pageTitle || document.title,
+    referrer: document.referrer || "直接進入",
+    device: getDeviceLabel(),
+    language: typeof navigator === "undefined" ? "" : navigator.language || "",
+    viewport:
+      typeof window === "undefined" ? "" : `${window.innerWidth}x${window.innerHeight}`,
+    sessionId: currentSessionId
+  };
+
+  saveStoredVisits([...records, next].slice(-1200));
+}
+
+function createDaySeries(records, span = 14) {
+  const totals = records.reduce((acc, item) => {
+    acc[item.day] = (acc[item.day] || 0) + 1;
+    return acc;
+  }, {});
+  const result = [];
+  const today = new Date();
+
+  for (let index = span - 1; index >= 0; index -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - index);
+    const day = getDayKey(date);
+    result.push({ day, count: totals[day] || 0 });
+  }
+
+  return result;
+}
+
+function countVisitsSince(records, days) {
+  const cutoff = new Date();
+  cutoff.setHours(0, 0, 0, 0);
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  return records.filter((item) => new Date(item.timestamp) >= cutoff).length;
+}
+
+function exportVisitsCsv(records) {
+  const header = ["day", "timestamp", "path", "pageTitle", "referrer", "device", "language", "viewport", "sessionId"];
+  const rows = records.map((item) =>
+    header
+      .map((key) => `"${String(item[key] || "").replaceAll('"', '""')}"`)
+      .join(",")
+  );
+  return [header.join(","), ...rows].join("\n");
 }
 
 function useSiteData(basePath = "") {
@@ -571,16 +698,156 @@ function ResumeColumn({ icon, title, items, compact = false }) {
   );
 }
 
+function AnalyticsPanel() {
+  const [records, setRecords] = useState(() => loadStoredVisits());
+  const daySeries = useMemo(() => createDaySeries(records, 14), [records]);
+  const defaultDay = [...daySeries].reverse().find((item) => item.count > 0)?.day || daySeries.at(-1)?.day || "";
+  const [selectedDay, setSelectedDay] = useState(defaultDay);
+
+  useEffect(() => {
+    setSelectedDay((current) => current || defaultDay);
+  }, [defaultDay]);
+
+  useEffect(() => {
+    const syncRecords = () => setRecords(loadStoredVisits());
+    window.addEventListener("storage", syncRecords);
+    window.addEventListener("focus", syncRecords);
+    return () => {
+      window.removeEventListener("storage", syncRecords);
+      window.removeEventListener("focus", syncRecords);
+    };
+  }, []);
+
+  const total = records.length;
+  const todayCount = countVisitsSince(records, 1);
+  const weekCount = countVisitsSince(records, 7);
+  const monthCount = countVisitsSince(records, 30);
+  const detailRecords = useMemo(
+    () =>
+      records
+        .filter((item) => item.day === selectedDay)
+        .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp))),
+    [records, selectedDay]
+  );
+  const chartMax = Math.max(...daySeries.map((item) => item.count), 1);
+
+  function downloadVisits(format) {
+    const payload = format === "csv" ? exportVisitsCsv(records) : JSON.stringify(records, null, 2) + "\n";
+    const blob = new Blob([payload], { type: format === "csv" ? "text/csv;charset=utf-8" : "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = format === "csv" ? "visitor-analytics.csv" : "visitor-analytics.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <section className="analytics-panel">
+      <div className="analytics-header">
+        <div>
+          <span className="section-kicker">Visitor snapshot</span>
+          <h2>瀏覽概覽</h2>
+          <p className="analytics-note">
+            這是目前這台裝置記錄到的本地瀏覽資料，不代表全站真實流量，也不包含訪客 IP。
+          </p>
+        </div>
+        <div className="analytics-actions">
+          <button className="icon-button" onClick={() => downloadVisits("json")} type="button">
+            <Download size={18} />
+            匯出 JSON
+          </button>
+          <button className="icon-button" onClick={() => downloadVisits("csv")} type="button">
+            <Download size={18} />
+            匯出 CSV
+          </button>
+        </div>
+      </div>
+
+      <div className="analytics-stats">
+        <article className="analytics-stat-card">
+          <strong>{todayCount}</strong>
+          <span>今日瀏覽</span>
+        </article>
+        <article className="analytics-stat-card">
+          <strong>{weekCount}</strong>
+          <span>近 7 天</span>
+        </article>
+        <article className="analytics-stat-card">
+          <strong>{monthCount}</strong>
+          <span>近 30 天</span>
+        </article>
+        <article className="analytics-stat-card">
+          <strong>{total}</strong>
+          <span>累積紀錄</span>
+        </article>
+      </div>
+
+      <div className="analytics-grid">
+        <article className="analytics-card">
+          <div className="analytics-card-head">
+            <h3>近 14 日趨勢</h3>
+            <span>點選日期可看當日明細</span>
+          </div>
+          <div className="visit-chart" role="list" aria-label="近十四日瀏覽圖表">
+            {daySeries.map((item) => (
+              <button
+                key={item.day}
+                className={`visit-bar ${selectedDay === item.day ? "active" : ""}`}
+                type="button"
+                onClick={() => setSelectedDay(item.day)}
+              >
+                <span className="visit-bar-count">{item.count}</span>
+                <span
+                  className="visit-bar-fill"
+                  style={{ height: `${Math.max((item.count / chartMax) * 100, item.count > 0 ? 12 : 4)}%` }}
+                />
+                <span className="visit-bar-label">{item.day.slice(5).replace("-", "/")}</span>
+              </button>
+            ))}
+          </div>
+        </article>
+
+        <article className="analytics-card detail-card">
+          <div className="analytics-card-head">
+            <h3>{selectedDay ? `${formatDayLabel(selectedDay)} 明細` : "當日明細"}</h3>
+            <span>{detailRecords.length} 筆</span>
+          </div>
+          <div className="visit-detail-list">
+            {detailRecords.length ? (
+              detailRecords.map((item) => (
+                <article className="visit-detail-row" key={item.id}>
+                  <div>
+                    <strong>{new Date(item.timestamp).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</strong>
+                    <p>{item.path}</p>
+                  </div>
+                  <div className="visit-meta">
+                    <span>{item.device}</span>
+                    <span>{item.viewport}</span>
+                    <span>{item.referrer}</span>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="empty-analytics-state">這一天目前沒有本地瀏覽紀錄。</div>
+            )}
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
+
 export function ManageSite({ performances, basePath = "" }) {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("bochun-admin") === "yes");
   const [password, setPassword] = useState("");
   const [records, setRecords] = useState(performances);
   const [editingId, setEditingId] = useState("");
-  const [form, setForm] = useState(emptyPerformance);
+  const [form, setForm] = useState({ ...emptyPerformance, id: `perf-${Date.now()}` });
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    setRecords(performances);
+    setRecords(performances.map(normalizePerformanceRecord));
   }, [performances]);
 
   const sortedRecords = useMemo(
@@ -601,21 +868,24 @@ export function ManageSite({ performances, basePath = "" }) {
 
   function startEdit(record) {
     setEditingId(record.id);
-    setForm(record);
+    setForm(normalizePerformanceRecord(record));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function resetForm() {
     setEditingId("");
-    setForm({ ...emptyPerformance, id: `perf-${Date.now()}` });
+    setForm({ ...emptyPerformance, id: `perf-${Date.now()}`, photos: [] });
   }
 
   function submitRecord(event) {
     event.preventDefault();
+    const nextPhotos = getPhotos(form);
     const next = {
       ...form,
       id: form.id || `perf-${Date.now()}`,
       year: inferYear(form.date, form.year),
+      photo: nextPhotos[0] || "",
+      photos: nextPhotos,
       featured: Boolean(form.featured)
     };
     setRecords((current) => {
@@ -649,13 +919,57 @@ export function ManageSite({ performances, basePath = "" }) {
       try {
         const parsed = JSON.parse(String(reader.result));
         if (!Array.isArray(parsed)) throw new Error("Invalid JSON");
-        setRecords(parsed);
+        setRecords(parsed.map(normalizePerformanceRecord));
         setMessage(`已匯入 ${parsed.length} 筆演出紀錄。`);
       } catch {
         setMessage("匯入失敗，請確認檔案是 performances.json 格式。");
       }
     };
     reader.readAsText(file);
+  }
+
+  function handlePhotoUpload(event) {
+    const files = [...(event.target.files || [])];
+    if (!files.length) return;
+
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ""));
+            reader.onerror = () => reject(new Error("upload failed"));
+            reader.readAsDataURL(file);
+          })
+      )
+    )
+      .then((images) => {
+        setForm((current) => {
+          const photos = [...getPhotos(current), ...images.filter(Boolean)];
+          return {
+            ...current,
+            photo: photos[0] || "",
+            photos
+          };
+        });
+        setMessage(`已加入 ${images.length} 張照片，匯出 JSON 時會一併帶出。`);
+      })
+      .catch(() => {
+        setMessage("照片讀取失敗，請再試一次。");
+      });
+
+    event.target.value = "";
+  }
+
+  function removeFormPhoto(index) {
+    setForm((current) => {
+      const photos = getPhotos(current).filter((_, photoIndex) => photoIndex !== index);
+      return {
+        ...current,
+        photo: photos[0] || "",
+        photos
+      };
+    });
   }
 
   if (!unlocked) {
@@ -707,6 +1021,8 @@ export function ManageSite({ performances, basePath = "" }) {
         </div>
       </header>
 
+      <AnalyticsPanel />
+
       <section className="editor-layout">
         <form className="record-form" onSubmit={submitRecord}>
           <h2>{editingId ? "編輯演出" : "新增演出"}</h2>
@@ -720,7 +1036,35 @@ export function ManageSite({ performances, basePath = "" }) {
             簡介
             <textarea value={form.summary} onChange={(event) => setForm({ ...form, summary: event.target.value })} />
           </label>
-          <Field label="照片路徑" value={form.photo} onChange={(value) => setForm({ ...form, photo: value })} />
+          <div className="photo-upload-block">
+            <div className="photo-upload-head">
+              <span>演出照片</span>
+              <label className="icon-button upload-button">
+                <ImageIcon size={18} />
+                上傳照片
+                <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} />
+              </label>
+            </div>
+            {getPhotos(form).length ? (
+              <div className="photo-preview-grid">
+                {getPhotos(form).map((photo, index) => (
+                  <div className="photo-preview-card" key={`${photo.slice(0, 40)}-${index}`}>
+                    <img src={photo} alt={`演出照片 ${index + 1}`} />
+                    <button
+                      className="square-button danger preview-remove"
+                      type="button"
+                      onClick={() => removeFormPhoto(index)}
+                      aria-label={`刪除第 ${index + 1} 張照片`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="photo-empty-note">尚未加入照片。上傳後會在這裡預覽，匯出 JSON 時也會一起保留。</p>
+            )}
+          </div>
           <label className="checkbox-row">
             <input
               type="checkbox"
@@ -779,6 +1123,11 @@ function Field({ label, value, onChange, type = "text", required = false }) {
 export function AppShell({ mode = "public", basePath = "" }) {
   const { content, performances, error } = useSiteData(basePath);
   const isManage = mode === "manage";
+
+  useEffect(() => {
+    if (!content || isManage) return;
+    recordVisit(basePath, content.profile.brandName);
+  }, [basePath, content, isManage]);
 
   if (error) return <div className="loading-state">{error}</div>;
   if (!content) return <div className="loading-state">載入中</div>;

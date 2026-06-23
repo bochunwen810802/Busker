@@ -696,6 +696,197 @@ h2 {
   margin: 8px 0 0;
 }
 
+.analytics-panel {
+  background: rgba(255, 250, 240, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  padding: 22px;
+}
+
+.analytics-header,
+.analytics-card-head {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.analytics-header h2 {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  margin: 10px 0 0;
+}
+
+.analytics-note,
+.analytics-card-head span {
+  color: rgba(23, 20, 17, 0.7);
+  font-family: "Avenir Next", "PingFang TC", sans-serif;
+  line-height: 1.7;
+  margin: 12px 0 0;
+}
+
+.analytics-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.analytics-stats,
+.analytics-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.analytics-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 26px;
+}
+
+.analytics-stat-card,
+.analytics-card {
+  background: #fffdf7;
+  border: 1px solid rgba(23, 20, 17, 0.1);
+  border-radius: 8px;
+}
+
+.analytics-stat-card {
+  padding: 18px;
+}
+
+.analytics-stat-card strong {
+  color: var(--teal);
+  display: block;
+  font-family: "Avenir Next", "PingFang TC", sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.analytics-stat-card span {
+  color: rgba(23, 20, 17, 0.72);
+  display: block;
+  margin-top: 8px;
+}
+
+.analytics-grid {
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  margin-top: 18px;
+}
+
+.analytics-card {
+  padding: 18px;
+}
+
+.analytics-card h3 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.visit-chart {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  margin-top: 18px;
+  min-height: 240px;
+}
+
+.visit-bar {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+}
+
+.visit-bar-count,
+.visit-bar-label,
+.visit-meta span,
+.empty-analytics-state {
+  color: rgba(23, 20, 17, 0.68);
+  font-family: "Avenir Next", "PingFang TC", sans-serif;
+  font-size: 0.82rem;
+}
+
+.visit-bar-fill {
+  background: linear-gradient(180deg, var(--gold) 0%, var(--terracotta) 100%);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(23, 20, 17, 0.05);
+  display: block;
+  transition: transform 180ms ease, filter 180ms ease;
+  width: 100%;
+}
+
+.visit-bar.active .visit-bar-fill,
+.visit-bar:hover .visit-bar-fill {
+  filter: saturate(1.08);
+  transform: translateY(-3px);
+}
+
+.visit-bar.active .visit-bar-count,
+.visit-bar.active .visit-bar-label {
+  color: var(--terracotta);
+  font-weight: 800;
+}
+
+.detail-card {
+  min-height: 100%;
+}
+
+.visit-detail-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.visit-detail-row {
+  align-items: start;
+  border-top: 1px solid rgba(23, 20, 17, 0.08);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  padding-top: 12px;
+}
+
+.visit-detail-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.visit-detail-row strong {
+  display: block;
+  font-family: "Avenir Next", "PingFang TC", sans-serif;
+}
+
+.visit-detail-row p {
+  margin: 6px 0 0;
+  word-break: break-word;
+}
+
+.visit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.visit-meta span {
+  background: var(--mint);
+  border-radius: 999px;
+  color: var(--teal);
+  padding: 5px 10px;
+}
+
+.empty-analytics-state {
+  padding: 24px 4px 8px;
+}
+
 .icon-button {
   background: var(--paper-strong);
   border: 1px solid var(--line);
@@ -728,8 +919,7 @@ h2 {
 .record-form {
   display: grid;
   gap: 14px;
-  position: sticky;
-  top: 22px;
+  align-content: start;
 }
 
 .record-form h2 {
@@ -776,6 +966,64 @@ textarea {
 .form-message {
   color: var(--terracotta);
   font-weight: 800;
+  margin: 0;
+}
+
+.photo-upload-block {
+  display: grid;
+  gap: 12px;
+}
+
+.photo-upload-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.photo-upload-head span,
+.photo-empty-note {
+  font-family: "Avenir Next", "PingFang TC", sans-serif;
+}
+
+.upload-button {
+  overflow: hidden;
+}
+
+.upload-button input {
+  cursor: pointer;
+}
+
+.photo-preview-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+}
+
+.photo-preview-card {
+  aspect-ratio: 1 / 1;
+  background: #fffdf7;
+  border: 1px solid rgba(23, 20, 17, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.photo-preview-card img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.preview-remove {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+}
+
+.photo-empty-note {
+  color: rgba(23, 20, 17, 0.68);
+  line-height: 1.7;
   margin: 0;
 }
 
@@ -848,7 +1096,9 @@ textarea {
   .resume-grid,
   .section-grid,
   .contact-section,
-  .editor-layout {
+  .editor-layout,
+  .analytics-stats,
+  .analytics-grid {
     grid-template-columns: 1fr;
   }
 
@@ -862,12 +1112,26 @@ textarea {
     gap: 18px;
   }
 
+  .analytics-header,
+  .analytics-card-head {
+    flex-direction: column;
+  }
+
+  .photo-upload-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .timeline-item {
     grid-template-columns: 106px minmax(0, 1fr) 124px;
   }
 
   .contact-panel {
     justify-items: start;
+  }
+
+  .visit-chart {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
   .contact-actions,
@@ -926,12 +1190,14 @@ textarea {
 
   .year-group,
   .timeline-item,
-  .record-row {
+  .record-row,
+  .visit-detail-row {
     grid-template-columns: 1fr;
   }
 
   .site-footer,
-  .manage-actions {
+  .manage-actions,
+  .analytics-actions {
     align-items: stretch;
     flex-direction: column;
   }
