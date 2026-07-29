@@ -30,6 +30,20 @@ import {
 const ADMIN_PASSWORD = "bochunmusic";
 const VISIT_STORAGE_KEY = "bochun-visitor-analytics-v1";
 const VISIT_SESSION_KEY = "bochun-visitor-session-v1";
+const PERFORMANCES_CACHE_KEY = "bochun-performances-cache-v1";
+
+function savePerformancesData(records, basePath = "") {
+  if (typeof window === "undefined" || !Array.isArray(records)) return;
+  try {
+    window.localStorage.setItem(PERFORMANCES_CACHE_KEY, JSON.stringify(records));
+    window.dispatchEvent(new CustomEvent("performances-updated", { detail: records }));
+  } catch {}
+  fetch(withBase(basePath, "/api/performances"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(records)
+  }).catch(() => {});
+}
 const emptyPerformance = {
   id: "",
   date: "",
@@ -210,10 +224,40 @@ function useSiteData(basePath = "") {
     ])
       .then(([siteContent, performanceData]) => {
         setContent(siteContent);
-        setPerformances(performanceData);
+        let cached = null;
+        if (typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem(PERFORMANCES_CACHE_KEY);
+            if (raw) cached = JSON.parse(raw);
+          } catch {}
+        }
+        setPerformances(Array.isArray(cached) && cached.length > 0 ? cached : performanceData);
       })
       .catch(() => setError("資料載入失敗，請確認 data JSON 是否存在。"));
   }, [basePath]);
+
+  useEffect(() => {
+    const handleUpdate = (event) => {
+      if (event?.detail && Array.isArray(event.detail)) {
+        setPerformances(event.detail);
+      } else if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem(PERFORMANCES_CACHE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) setPerformances(parsed);
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener("performances-updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("performances-updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
 
   return { content, performances, error };
 }
@@ -888,17 +932,19 @@ export function ManageSite({ performances, basePath = "" }) {
       photos: nextPhotos,
       featured: Boolean(form.featured)
     };
-    setRecords((current) => {
-      const exists = current.some((item) => item.id === next.id);
-      return exists ? current.map((item) => (item.id === next.id ? next : item)) : [next, ...current];
-    });
-    setMessage(editingId ? "演出紀錄已更新，可匯出 JSON。" : "演出紀錄已新增，可匯出 JSON。");
+    const exists = records.some((item) => item.id === next.id);
+    const updated = exists ? records.map((item) => (item.id === next.id ? next : item)) : [next, ...records];
+    setRecords(updated);
+    savePerformancesData(updated, basePath);
+    setMessage(editingId ? "演出紀錄已更新並自動寫入 JSON！" : "演出紀錄已新增並自動寫入 JSON！");
     resetForm();
   }
 
   function removeRecord(id) {
-    setRecords((current) => current.filter((item) => item.id !== id));
-    setMessage("演出紀錄已刪除，可匯出 JSON。");
+    const updated = records.filter((item) => item.id !== id);
+    setRecords(updated);
+    savePerformancesData(updated, basePath);
+    setMessage("演出紀錄已刪除並自動寫入 JSON！");
   }
 
   function exportJson() {
@@ -919,8 +965,10 @@ export function ManageSite({ performances, basePath = "" }) {
       try {
         const parsed = JSON.parse(String(reader.result));
         if (!Array.isArray(parsed)) throw new Error("Invalid JSON");
-        setRecords(parsed.map(normalizePerformanceRecord));
-        setMessage(`已匯入 ${parsed.length} 筆演出紀錄。`);
+        const normalized = parsed.map(normalizePerformanceRecord);
+        setRecords(normalized);
+        savePerformancesData(normalized, basePath);
+        setMessage(`已匯入 ${parsed.length} 筆演出紀錄並自動寫入 JSON！`);
       } catch {
         setMessage("匯入失敗，請確認檔案是 performances.json 格式。");
       }
