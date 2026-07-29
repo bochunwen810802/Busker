@@ -26,6 +26,7 @@ import {
   Unlock,
   X
 } from "lucide-react";
+import { fetchPerformancesFromCloud, savePerformancesToCloud } from "./services/db.js";
 
 const ADMIN_PASSWORD = "bochunmusic";
 const VISIT_STORAGE_KEY = "bochun-visitor-analytics-v1";
@@ -33,16 +34,7 @@ const VISIT_SESSION_KEY = "bochun-visitor-session-v1";
 const PERFORMANCES_CACHE_KEY = "bochun-performances-cache-v1";
 
 function savePerformancesData(records, basePath = "") {
-  if (typeof window === "undefined" || !Array.isArray(records)) return;
-  try {
-    window.localStorage.setItem(PERFORMANCES_CACHE_KEY, JSON.stringify(records));
-    window.dispatchEvent(new CustomEvent("performances-updated", { detail: records }));
-  } catch {}
-  fetch(withBase(basePath, "/api/performances"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(records)
-  }).catch(() => {});
+  savePerformancesToCloud(records, basePath);
 }
 const emptyPerformance = {
   id: "",
@@ -235,9 +227,10 @@ function useSiteData(basePath = "") {
   useEffect(() => {
     Promise.all([
       fetch(withBase(basePath, "/data/site-content.json")).then((response) => response.json()),
-      fetch(withBase(basePath, "/data/performances.json")).then((response) => response.json())
+      fetch(withBase(basePath, "/data/performances.json")).then((response) => response.json()),
+      fetchPerformancesFromCloud()
     ])
-      .then(([siteContent, performanceData]) => {
+      .then(([siteContent, performanceData, cloudData]) => {
         setContent(siteContent);
         let cached = [];
         if (typeof window !== "undefined") {
@@ -249,8 +242,11 @@ function useSiteData(basePath = "") {
             }
           } catch {}
         }
-        const merged = mergePerformanceRecords(performanceData, cached);
-        setPerformances(merged.length > 0 ? merged : performanceData);
+        let baseList = mergePerformanceRecords(performanceData, cached);
+        if (Array.isArray(cloudData) && cloudData.length > 0) {
+          baseList = mergePerformanceRecords(baseList, cloudData);
+        }
+        setPerformances(baseList.length > 0 ? baseList : performanceData);
       })
       .catch(() => setError("資料載入失敗，請確認 data JSON 是否存在。"));
   }, [basePath]);
