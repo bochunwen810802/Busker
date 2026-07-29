@@ -212,6 +212,21 @@ function exportVisitsCsv(records) {
   return [header.join(","), ...rows].join("\n");
 }
 
+function mergePerformanceRecords(serverItems = [], cachedItems = []) {
+  const map = new Map();
+  if (Array.isArray(serverItems)) {
+    for (const item of serverItems) {
+      if (item?.id) map.set(item.id, item);
+    }
+  }
+  if (Array.isArray(cachedItems)) {
+    for (const item of cachedItems) {
+      if (item?.id) map.set(item.id, item);
+    }
+  }
+  return Array.from(map.values());
+}
+
 function useSiteData(basePath = "") {
   const [content, setContent] = useState(null);
   const [performances, setPerformances] = useState([]);
@@ -224,14 +239,18 @@ function useSiteData(basePath = "") {
     ])
       .then(([siteContent, performanceData]) => {
         setContent(siteContent);
-        let cached = null;
+        let cached = [];
         if (typeof window !== "undefined") {
           try {
             const raw = window.localStorage.getItem(PERFORMANCES_CACHE_KEY);
-            if (raw) cached = JSON.parse(raw);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) cached = parsed;
+            }
           } catch {}
         }
-        setPerformances(Array.isArray(cached) && cached.length > 0 ? cached : performanceData);
+        const merged = mergePerformanceRecords(performanceData, cached);
+        setPerformances(merged.length > 0 ? merged : performanceData);
       })
       .catch(() => setError("資料載入失敗，請確認 data JSON 是否存在。"));
   }, [basePath]);
