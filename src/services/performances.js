@@ -11,13 +11,23 @@ function photosOf(item) {
 }
 
 export function mergePerformanceRecords(serverItems = [], cachedItems = []) {
+  const candidates = [serverItems, cachedItems].flatMap((items) =>
+    Array.isArray(items) ? items.filter((item) => item?.id) : []
+  );
+  // Explicit replacements retire old names/venues without importing their photos.
+  // Derive these before ID overrides so an old cache cannot undo the migration.
+  const supersededKeys = new Set(candidates.flatMap((item) =>
+    Array.isArray(item.supersedes) ? item.supersedes.map(eventKey).filter(Boolean) : []
+  ));
+
   // Keep edits to an existing ID, then reconcile copies created with different IDs.
   const byId = new Map();
-  for (const items of [serverItems, cachedItems]) {
-    if (!Array.isArray(items)) continue;
-    for (const item of items) {
-      if (item?.id) byId.set(item.id, item);
-    }
+  for (const item of candidates) {
+    if (supersededKeys.has(eventKey(item))) continue;
+    const previous = byId.get(item.id);
+    const aliases = [previous?.supersedes, item.supersedes].flatMap((value) => Array.isArray(value) ? value : []);
+    const supersedes = [...new Map(aliases.map((alias) => [eventKey(alias), alias])).values()];
+    byId.set(item.id, supersedes.length ? { ...item, supersedes } : item);
   }
 
   const records = [];

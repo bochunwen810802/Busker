@@ -1328,7 +1328,14 @@
       "/images/busker-site/tun-art-center-2026-2.webp",
       "/images/busker-site/tun-art-center-2026-3.webp"
     ],
-    "featured": false
+    "featured": false,
+    "supersedes": [
+      {
+        "date": "2026-07-19",
+        "title": "台中市太平區屯區藝文中心假日演出",
+        "venue": "台中市太平區屯區藝文中心"
+      }
+    ]
   },
   {
     "id": "perf-091",
@@ -1344,7 +1351,14 @@
     "photos": [
       "/images/busker-site/nantun-father-awards-2026.jpg"
     ],
-    "featured": false
+    "featured": false,
+    "supersedes": [
+      {
+        "date": "2026-07-25",
+        "title": "南屯區公所模範父親活動表演",
+        "venue": "潮港城國際美食宴會廳"
+      }
+    ]
   },
   {
     "id": "perf-089",

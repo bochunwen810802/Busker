@@ -5,6 +5,61 @@ import { mergePerformanceRecords } from "./performances.js";
 
 const records = JSON.parse(readFileSync(new URL("../../public/data/performances.json", import.meta.url)));
 
+const legacyJulyRecords = [
+  {
+    id: "old-july-19",
+    date: "2026-07-19",
+    year: 2026,
+    title: "台中市太平區屯區藝文中心假日演出",
+    category: "定點表演",
+    venue: "台中市太平區屯區藝文中心",
+    photo: "/old-july-19.jpg",
+    photos: ["/old-july-19.jpg", "/old-july-19-2.jpg", "/old-july-19-3.jpg"]
+  },
+  {
+    id: "old-july-25",
+    date: "2026-07-25",
+    year: 2026,
+    title: "南屯區公所模範父親活動表演",
+    category: "活動商演",
+    venue: "潮港城國際美食宴會廳",
+    photo: "/old-july-25.jpg",
+    photos: ["/old-july-25.jpg", "/old-july-25-2.jpg"]
+  }
+];
+
+test("the two legacy records in the screenshots are replaced entirely by the latest records", () => {
+  assert.deepEqual(mergePerformanceRecords(records, legacyJulyRecords), records);
+  assert.deepEqual(mergePerformanceRecords(legacyJulyRecords, records), records);
+  assert.deepEqual(mergePerformanceRecords([...records, ...legacyJulyRecords]), records);
+  assert.deepEqual(mergePerformanceRecords(mergePerformanceRecords(records, legacyJulyRecords), legacyJulyRecords), records);
+});
+
+test("replacement does not depend on the old IDs or 台/臺 spelling", () => {
+  const legacy = legacyJulyRecords.map((item, index) => ({
+    ...item,
+    id: `another-old-id-${index}`,
+    title: item.title.replaceAll("台", "臺"),
+    venue: item.venue.replaceAll("台", "臺")
+  }));
+  assert.deepEqual(mergePerformanceRecords(records, legacy), records);
+});
+
+test("legacy records are retained when their replacement is unavailable", () => {
+  assert.deepEqual(mergePerformanceRecords([], legacyJulyRecords), legacyJulyRecords);
+});
+
+test("old same-ID caches cannot remove replacement rules before the cloud merge", () => {
+  const cached = records.map(({ supersedes, ...item }) => item);
+  const withCache = mergePerformanceRecords(records, cached);
+  assert.deepEqual(mergePerformanceRecords(withCache, legacyJulyRecords), records);
+});
+
+test("legacy entries cannot override the latest records even when they reuse their IDs", () => {
+  const legacy = legacyJulyRecords.map((item, index) => ({ ...item, id: ["perf-092", "perf-091"][index] }));
+  assert.deepEqual(mergePerformanceRecords(records, legacy), records);
+});
+
 test("July performances saved under different browser IDs appear once and retain photos", () => {
   const originals = records.filter((item) => ["perf-091", "perf-092"].includes(item.id));
   const cached = originals.map((item, index) => ({
