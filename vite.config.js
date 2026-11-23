@@ -3,6 +3,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import vinext from "vinext";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin.js";
+import { performancesVersion } from "./build/performance-data-version.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -49,6 +50,7 @@ function savePerformancesPlugin() {
 
 export default defineConfig({
   define: {
+    "import.meta.env.VITE_PERFORMANCES_VERSION": JSON.stringify(performancesVersion),
     "import.meta.env.VITE_CLOUD_DB_URL": JSON.stringify("https://api.jsonbin.io/v3/b/6a69a906da38895dfe9eaf32"),
     "import.meta.env.VITE_CLOUD_DB_KEY": JSON.stringify("$2a$10$BokWxV9Lgfw4mSRzpeztvOVx8y2wRLRMCIg0Ko75QdjRJLzCzovwS")
   },

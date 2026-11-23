@@ -211,9 +211,12 @@ function useSiteData(basePath = "") {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const dataVersion = import.meta.env?.VITE_PERFORMANCES_VERSION;
+    const dataPath = withBase(basePath, "/data/performances.json");
+    const dataUrl = dataVersion ? `${dataPath}?v=${encodeURIComponent(dataVersion)}` : dataPath;
     Promise.all([
       fetch(withBase(basePath, "/data/site-content.json")).then((response) => response.json()),
-      fetch(withBase(basePath, "/data/performances.json")).then((response) => response.json()),
+      fetch(dataUrl, { cache: "no-store" }).then((response) => response.json()),
       fetchPerformancesFromCloud()
     ])
       .then(([siteContent, performanceData, cloudData]) => {
