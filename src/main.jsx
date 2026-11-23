@@ -576,6 +576,10 @@ export function PublicSite({ content, performances, basePath = "" }) {
               <ArrowDown size={18} />
               看演出經歷
             </a>
+            <a className="ghost-action" href={withBase(basePath, "/downloads/bochun-wen-resume.pdf")} download="草帽女孩溫柏淳-最新簡歷.pdf">
+              <Download size={18} />
+              下載最新簡歷
+            </a>
           </div>
         </div>
       </section>

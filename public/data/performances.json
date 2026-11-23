@@ -1311,5 +1311,92 @@
       "/images/busker-site/lele-houli.jpg"
     ],
     "featured": false
+  },
+  {
+    "id": "perf-092",
+    "date": "2026-07-19",
+    "year": 2026,
+    "title": "太平區屯區藝文中心假日演出",
+    "category": "定點駐唱",
+    "venue": "太平區屯區藝文中心",
+    "city": "臺中",
+    "role": "吉他彈唱 / Vocal",
+    "summary": "",
+    "photo": "/images/busker-site/tun-art-center-2026-1.webp",
+    "photos": [
+      "/images/busker-site/tun-art-center-2026-1.webp",
+      "/images/busker-site/tun-art-center-2026-2.webp",
+      "/images/busker-site/tun-art-center-2026-3.webp"
+    ],
+    "featured": false
+  },
+  {
+    "id": "perf-091",
+    "date": "2026-07-25",
+    "year": 2026,
+    "title": "臺中市南屯區模範父親表揚活動",
+    "category": "活動商演",
+    "venue": "潮港城國際美食館",
+    "city": "臺中",
+    "role": "吉他彈唱 / Vocal",
+    "summary": "",
+    "photo": "/images/busker-site/nantun-father-awards-2026.jpg",
+    "photos": [
+      "/images/busker-site/nantun-father-awards-2026.jpg"
+    ],
+    "featured": false
+  },
+  {
+    "id": "perf-089",
+    "date": "2026-08-26",
+    "year": 2026,
+    "title": "民俗漫畫主題特展展示製作及活動執行開幕茶會",
+    "category": "活動商演",
+    "venue": "台中國家漫畫博物館",
+    "city": "臺中",
+    "role": "吉他彈唱 / Vocal",
+    "summary": "",
+    "photo": "/images/busker-site/comic-museum-2026-1.jpg",
+    "photos": [
+      "/images/busker-site/comic-museum-2026-1.jpg",
+      "/images/busker-site/comic-museum-2026-2.jpg",
+      "/images/busker-site/comic-museum-2026-3.jpg",
+      "/images/busker-site/comic-museum-2026-4.jpg"
+    ],
+    "featured": false
+  },
+  {
+    "id": "perf-088",
+    "date": "2026-09-19",
+    "year": 2026,
+    "title": "2026嘉有好市集",
+    "category": "活動商演",
+    "venue": "嘉義縣政府外廣場",
+    "city": "嘉義",
+    "role": "吉他彈唱 / Vocal",
+    "summary": "",
+    "photo": "/images/busker-site/chiayi-market-2026-1.jpg",
+    "photos": [
+      "/images/busker-site/chiayi-market-2026-1.jpg",
+      "/images/busker-site/chiayi-market-2026-2.jpg",
+      "/images/busker-site/chiayi-market-2026-3.jpg"
+    ],
+    "featured": false
+  },
+  {
+    "id": "perf-090",
+    "date": "2026-09-20",
+    "year": 2026,
+    "title": "後龍柚見你茄苳社區中秋聯歡晚會暨防詐宣導",
+    "category": "活動商演",
+    "venue": "臺中市均安宮廟前廣場",
+    "city": "臺中",
+    "role": "吉他彈唱 / Vocal",
+    "summary": "",
+    "photo": "/images/busker-site/jiadong-mid-autumn-2026.jpg",
+    "photos": [
+      "/images/busker-site/jiadong-mid-autumn-2026.jpg"
+    ],
+    "featured": false
   }
 ]
