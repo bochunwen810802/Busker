@@ -27,6 +27,7 @@ import {
   X
 } from "lucide-react";
 import { fetchPerformancesFromCloud, savePerformancesToCloud } from "./services/db.js";
+import { mergePerformanceRecords } from "./services/performances.js";
 
 const ADMIN_PASSWORD = "bochunmusic";
 const VISIT_STORAGE_KEY = "bochun-visitor-analytics-v1";
@@ -34,7 +35,7 @@ const VISIT_SESSION_KEY = "bochun-visitor-session-v1";
 const PERFORMANCES_CACHE_KEY = "bochun-performances-cache-v1";
 
 function savePerformancesData(records, basePath = "") {
-  savePerformancesToCloud(records, basePath);
+  savePerformancesToCloud(mergePerformanceRecords([], records), basePath);
 }
 const emptyPerformance = {
   id: "",
@@ -204,21 +205,6 @@ function exportVisitsCsv(records) {
   return [header.join(","), ...rows].join("\n");
 }
 
-function mergePerformanceRecords(serverItems = [], cachedItems = []) {
-  const map = new Map();
-  if (Array.isArray(serverItems)) {
-    for (const item of serverItems) {
-      if (item?.id) map.set(item.id, item);
-    }
-  }
-  if (Array.isArray(cachedItems)) {
-    for (const item of cachedItems) {
-      if (item?.id) map.set(item.id, item);
-    }
-  }
-  return Array.from(map.values());
-}
-
 function useSiteData(basePath = "") {
   const [content, setContent] = useState(null);
   const [performances, setPerformances] = useState([]);
@@ -254,13 +240,13 @@ function useSiteData(basePath = "") {
   useEffect(() => {
     const handleUpdate = (event) => {
       if (event?.detail && Array.isArray(event.detail)) {
-        setPerformances(event.detail);
+        setPerformances(mergePerformanceRecords([], event.detail));
       } else if (typeof window !== "undefined") {
         try {
           const raw = window.localStorage.getItem(PERFORMANCES_CACHE_KEY);
           if (raw) {
             const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) setPerformances(parsed);
+            if (Array.isArray(parsed)) setPerformances(mergePerformanceRecords([], parsed));
           }
         } catch {}
       }
